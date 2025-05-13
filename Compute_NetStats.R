@@ -108,6 +108,16 @@ compute_bias_metrics_old <- function(original_sim, perturbed_sim, name) {
 # or spuriously present nodes. Function will consider only nodes present in both ground truth AND
 # error networks, using the NodeID vertex attribute as a key
 
+#######################################################################################
+
+# READ ME
+# READ ME
+# READ ME
+
+# ADD A CALCULATION FOR KENDALL'S TAU RANK CORRELATION 
+# AS SEEN IN
+# https://link.springer.com/article/10.1140/epjb/e2007-00033-7
+
 compute_bias_metrics7 <- function(original_sim, perturbed_sim, name) {
   data.frame(
     id = paste0(name, seq_along(original_sim)),
