@@ -103,7 +103,7 @@ NodeMissRand3 <- function(network_list, missing_pct = 0.1) {
 #
 ########################################################################################
 
-##### First attempt at above function ####
+##### First attempt at above function #####
 
 TieAddRandNode <- function(network_list, add_pct = 0.1) {
   lapply(network_list, function(net) {
