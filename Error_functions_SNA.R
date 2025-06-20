@@ -1,20 +1,20 @@
 ################################# Remove ties randomly ##################################
 
 TieMissRand2 <- function(network_list, missing_pct = 0.1) {
-  # Initialize an empty list to store networks with missing ties
+
   network_list_missing <- list()
   
-  # Loop through each network in the list
+
   for (i in seq_along(network_list)) {
-    # Extract the network object
+  
     net <- network_list[[i]]
     
     # Get all existing edges
-    edge_list <- as.matrix.network.edgelist(net)  # Extracts edge pairs
+    edge_list <- as.matrix.network.edgelist(net)
     
     # Determine the number of ties to remove
     num_edges <- nrow(edge_list)
-    num_remove <- round(num_edges * missing_pct)  # Ensure at least one removal
+    num_remove <- round(num_edges * missing_pct)
     
     if (num_remove > 0 && num_edges > 0) {
       # Select random edges to remove
@@ -66,85 +66,6 @@ NodeMissRand3 <- function(network_list, missing_pct = 0.1) {
 }
 
 ######################################## Add ties randomly #####################################
-
-#########################################################################################
-#
-# READ ME                                 READ ME
-# READ ME                                 READ ME
-# READ ME                                 READ ME
-#
-#########################################################################################
-#
-# THE CURRENT FRAMEWORK FOR ADDING TIES RANDOMLY IS INEFFICIENT AND MAY ALSO BE INVALID
-# THE CURRENT PROCESS CREATES A LIST OF ALL POSSIBLE TIES, SUBTRACTS THE OBSERVED TIES
-# FROM THIS SET, THEN SAMPLES FROM THE UNOBSERVED TIES TO DETERMINE WHAT TO ADD.
-#
-# THIS MEANS NODES WITH LESS TIES ARE MORE LIKELY TO HAVE TIES ADDED TO THEM, WHICH MAY
-# NOT BE REPRESENTATIVE OF REAL WORLD ERROR, PARTICULARLY IF THERE ARE UNDERLYING 
-# PROCESSES LEADING TO A NODE HAVING MANY TIES 
-#
-# AN ALTERNATIVE APPROACH COULD INVOLVE SELECTING NODES RANDOMLY FIRST, THEN CALCULATING
-# THE SAMPLE SPACE OF ALL POSSIBLE TIES FOR EACH NODE (MORE EFFICIENT) AND ADDING RANDOMLY
-# TO THAT SET. IF THE NODE HAS NO MISSING TIES, ANOTHER COULD BE SELECTED
-#
-# YOU COULD AVOID THE PROBLEM OF NODES POTENTIALLY NOT RECIEVING MULTIPLE TIES BY SAMPLING
-# WITH REPLACEMENT FROM 1 to len(nodes) with replacement, MEANING THE SAME NODE COULD BE
-# SAMPLED MULTIPLE TIMES. THIS WOULD ALSO MEAN ADDING TIES PROBABILISTICALLY 
-# WITH RESPECT TO IN OR OUTDEGREE WOULD BE MUCH EASIER
-#
-# THIS FRAMEWORK COULD LIKELY BE APPLIED TO OTHER FUNCTIONS IN THE SCRIPT, I WOULD 
-# HAVE TO DOUBLE CHECK
-#
-########################################################################################
-#
-# READ ME                                 READ ME
-# READ ME                                 READ ME
-# READ ME                                 READ ME
-#
-########################################################################################
-
-##### First attempt at above function #####
-
-TieAddRandNode <- function(network_list, add_pct = 0.1) {
-  lapply(network_list, function(net) {
-    n         <- network.size(net)
-    # grab a dense (logical) adjacency; update it in‐place
-    adj       <- as.matrix.network.adjacency(net, sparse = FALSE)
-    m_orig    <- network.edgecount(net)
-    n_add     <- round(m_orig * add_pct)
-    added     <- 0
-    tries     <- 0
-    max_tries <- n_add * 10  # guard against infinite loop
-    
-    while (added < n_add && tries < max_tries) {
-      tries <- tries + 1
-      
-      # pick a “source” node at random
-      i <- sample.int(n, 1)
-      
-      # compute its missing neighbors
-      # (exclude self and any j where adj[i,j] == TRUE)
-      miss <- which(!adj[i, ] & seq_len(n) != i)
-      if (length(miss) == 0) next
-      
-      # pick one missing neighbor, add the tie
-      j <- sample(miss, 1)
-      add.edges(net, tail = i, head = j)
-      
-      # update adj (undirected networks mirror both halves)
-      adj[i, j] <- TRUE
-      if (!is.directed(net)) adj[j, i] <- TRUE
-      
-      added <- added + 1
-    }
-    
-    if (added < n_add) {
-      warning(sprintf("Only added %d of requested %d ties", added, n_add))
-    }
-    
-    net
-  })
-}
 
 #### Other functions #####
 
