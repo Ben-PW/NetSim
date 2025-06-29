@@ -200,6 +200,7 @@ V(Eflo4[[1]])$NodeID
 
 # Add nodes with ties based on original network degree distribution
 
+# THIS FUNCTION IS NOT COMPLETE YET
 nodeAddRandDD <- function(graph_list, error_pct = 0.1) {
   lapply(graph_list, function(g){
     
