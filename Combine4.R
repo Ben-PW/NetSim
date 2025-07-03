@@ -10,6 +10,8 @@
 
 ####################################################################################################
 
+detach(package:networkdata)
+
 ################################# Randomisation test ###########################################
 # Alter this seed to check simulated networks are actually changing
 set.seed(2345)
@@ -27,283 +29,391 @@ source('Compute_NetStats.R')
 
 ####################################### Simulate networks #######################################
 
-FloSim <- simulate(flo1, nsim = 1000)
-Ac1Sim <- simulate(acct1, nsim = 1000)
-Ac2Sim <- simulate(acct2, nsim = 1000)
+iFlo <- simulate(flo1, nsim = 1000)
+iAc1 <- simulate(acct1, nsim = 1000)
+iAc2 <- simulate(acct2, nsim = 1000)
 
 rm(flo1, acct1, acct2)
+
+detach(package:statnet)
+detach(package:sna)
+
+library(igraph)
+library(intergraph)
+
+iFlo <- lapply(iFlo, intergraph::asIgraph)
+iAc1 <- lapply(iAc1, intergraph::asIgraph)
+iAc2 <- lapply(iAc2, intergraph::asIgraph)
 ################################ Ensure all networks are undirected ###########################
 
 ##### Function to ensure networks are undirected #####
 
-undirect <- function(network_list) {
-  lapply(network_list, function(net) {
-    if (is.directed(net)) {
-      # Convert to adjacency matrix, then back to an undirected network
-      net <- as.network(as.matrix.network.adjacency(net), directed = FALSE)
+undirect <- function(graph_list) {
+  lapply(graph_list, function(g) {
+    if (igraph::is.directed(g)) {
+      g <- igraph::as.undirected(g, mode = "collapse")
     }
-    
-    return(net)
+    g
   })
 }
 
 ##### Undirect networks #####
 
-Ac1Sim <- undirect(Ac1Sim)
-Ac2Sim <- undirect(Ac2Sim)
+Ac1Sim <- undirect(iAc1)
+Ac2Sim <- undirect(iAc2)
 
 ###################################### Assign ID to nodes ############################
 ##### Function to assign node ID #####
-assign_node_ids <- function(network_list) {
-  for (i in seq_along(network_list)) {
-    network_list[[i]] %v% "NodeID" <- seq_len(network.size(network_list[[i]]))
-  }
-  return(network_list)
+IDNodes <- function(graph_list){
+  lapply(graph_list, function(g){
+    V(g)$NodeID <- seq_len(vcount(g))
+    g
+  })
 }
 
 ##### Assign IDs to GT nodes #####
-FloSim <- assign_node_ids(FloSim)
-Ac1Sim <- assign_node_ids(Ac1Sim)
-Ac2Sim <- assign_node_ids(Ac2Sim)
+iFlo <- IDNodes(iFlo)
+iAc1 <- IDNodes(iAc1)
+iAc2 <- IDNodes(iAc2)
 
 ############################### Compute Ground Truth metrics ####################################
 
 ##### Function to compute GT metrics for each simulation #####
-compute_metrics <- function(network_list, name) {
+computeMetrics <- function(graph_list, name) {
   data.frame(
-    id = paste0(name, seq_along(network_list)),
-    density = sapply(network_list, network.density),
-    dcent = centralization(network_list, degree),
-    clustering = sapply(network_list, gtrans),
-    size = sapply(network_list, network.size),
-    avg_path_length = sapply(network_list, function(net) {
-      gmean <- geodist(net)$gdist
-      mean(gmean[is.finite(gmean)], na.rm = TRUE)
+    id = paste0(name, seq_along(graph_list)),
+    
+    density = sapply(graph_list, function(g) {
+      edge_density(g, loops = FALSE)
+    }),
+    
+    dcent = sapply(graph_list, function(g) {
+      cent <- centralization.degree(g, mode = "all", normalized = TRUE)
+      cent$centralization
+    }),
+    
+    clustering = sapply(graph_list, function(g) {
+      transitivity(g, type = "global")
+    }),
+    
+    size = sapply(graph_list, vcount),
+    
+    APL = sapply(graph_list, function(g) {
+      # all‐pairs shortest paths; exclude Infs
+      dist_mat <- distances(g, mode = "all")
+      mean(dist_mat[is.finite(dist_mat)], na.rm = TRUE)
     })
   )
 }
 
 ##### Compute GT metrics and combine #####
 
-GTFlo <- compute_metrics(FloSim, "FloSim")
-GTAc1 <- compute_metrics(Ac1Sim, "Ac1Sim")
-GTAc2 <- compute_metrics(Ac2Sim, "Ac2Sim")
+GTFlo <- computeMetrics(iFlo, "Flo")
+GTAc1 <- computeMetrics(iAc1, "Ac1")
+GTAc2 <- computeMetrics(iAc2, "Ac2")
 
 # Combine all into a single dataframe
 GTAll <- bind_rows(GTFlo, GTAc1, GTAc2)
 
-# Confirm statistic calculation and storage
-cat("Ground truth network statistics calculated and stored in 'GTdf'.\n")
+
 
 ################################### Calculate node level metrics ################################
 
 ##### Function to compute and assign node level metrics #####
-compute_centrality <- function(network_list) {
-  convert_graph <- list()
-  
-  for(i in seq_along(network_list)) {
-    convert_graph[[i]] <- intergraph::asIgraph(network_list[[i]])
-    network_list[[i]] %v% "Degree" <- sna::degree(network_list[[i]], gmode = "graph")
-    network_list[[i]] %v% "Betweenness" <- estimate_betweenness(convert_graph[[i]], cutoff = -1)
-    network_list[[i]] %v% "Closeness" <- estimate_closeness(convert_graph[[i]], cutoff = -1)
-    network_list[[i]] %v% "Eigenvector" <- eigen_centrality(convert_graph[[i]])$vector
-    network_list[[i]] %v% "PageRank" <- page_rank(convert_graph[[i]])$vector
-  }
-  
-  return(network_list)
+computeCentrality <- function(graph_list){
+  lapply(graph_list, function(g){
+    V(g)$Degree <- degree(g, mode = "all")
+    V(g)$Betweenness <- estimate_betweenness(g, cutoff = -1)
+    V(g)$Closeness <- estimate_closeness(g, cutoff = -1)
+    V(g)$Eigenvector <- eigen_centrality(g)$vector
+    V(g)$PageRank <- page_rank(g)$vector
+    g
+  })
 }
 
 ##### Compute and assign node level metrics #####
 
-library(igraph)
+iFlo <- computeCentrality(iFlo)
+iAc1 <- computeCentrality(iAc1)
+iAc2 <- computeCentrality(iAc2)
 
-FloSim <- compute_centrality(FloSim)
-Ac1Sim <- compute_centrality(Ac1Sim)
-Ac2Sim <- compute_centrality(Ac2Sim)
 
-detach(package:igraph)
 
 ######################################### Alter networks ########################################
 
-source("Error_functions_SNA.R") 
+source("Error_functions_3.R") 
+
+##### Simple tie removal #####
+
+# Tie removal function
+tieMissRand <- function(graph_list, missing_pct = 0.1) {
+  lapply(graph_list, function(g) {
+    m <- ecount(g)
+    k <- round(m * missing_pct)
+    if (m > 0 && k > 0) {
+      # sample k random edges
+      to_remove <- sample(E(g), k)
+      # delete_edges returns a new graph
+      g <- delete_edges(g, to_remove)
+    }
+    g
+  })
+}
+
+# 10% random tie deletion
+EFloMTies.01 <- tieMissRand(iFlo, 0.3)
+EAc1MTies.01 <- tieMissRand(iAc1, 0.3)
+EAc2MTies.01 <- tieMissRand(iAc2, 0.3)
 
 ##### Simple tie addition #####
-# TieAddIterative is a simple and pretty efficient function, default use this because the 
-# other ones scare me a bit
 
-# CHECK BELOW IDEA TOMORROW #
-
-# Would it be more memory efficient to do this with a network object which didn't have so many
-# attribbutes? Like I could calculate initial centrality scores and store in a dataframe, 
-# then delete everything except node id, add error, recalculate, store in another df, delete,
-# rinse and repeat?
+# Tie addition function
+tieAddRand <- function(graph_list, add_pct = 0.1) {
+  lapply(graph_list, function(g) {
+    m <- ecount(g)
+    num_add <- round(m * add_pct)
+    if (m > 0 && num_add > 0) {
+      # Build complement graph 
+      comp_g <- complementer(g, loops = FALSE)
+      
+      missing_edges <- ecount(comp_g)
+      num_add       <- min(num_add, missing_edges) #Don't add more edges than is possible
+      if (num_add > 0) {
+        
+        to_add <- sample(E(comp_g), num_add)
+        
+        # Get their endpoint pairs and flatten for add_edges()
+        ed_pairs <- ends(comp_g, to_add)
+        edge_vec <- as.vector(t(ed_pairs))
+        
+        # Add 
+        g <- add_edges(g, edge_vec)
+      }
+    }
+    g
+  })
+}
 
 # 10% random tie addition
-EFlo.01 <- TieAddRand6(FloSim, 0.1)
-EAc1.01 <- TieAddIterative(Ac1Sim, 0.1)
-EAc2.01 <- TieAddIterative(Ac2Sim, 0.1)
-EAC2.01 <- TieAddRandNode(Ac2Sim, 0.1) # Takes quite long to run
+EFloATies.01 <- tieAddRand(iFlo, 0.1)
+EAc1ATies.01 <- tieAddRand(iAc1, 0.1)
+EAc2ATies.01 <- tieAddRand(iAc2, 0.1)
 
-# 20% random tie addition
-EFlo.02 <- TieAddIterative(FloSim, 0.2)
-EAc1.02 <- TieAddIterative(Ac1Sim, 0.2)
-EAc2.02 <- TieAddIterative(Ac2Sim, 0.2)
+##### Simple node deletion #####
 
-##### Spurious nodes with 1 tie #####
-EFlo.NA.01.01 <- NodeAddFixedEdges2(FloSim, 0.1, 1)
-EAc1.NA.01.01 <- NodeAddFixedEdges2(Ac1Sim, 0.1, 1)
-EAc2.NA.01.01 <- NodeAddFixedEdges2(Ac2Sim, 0.1, 1)
+# Node removal function
+nodeMissRand <- function(graph_list, missing_pct = 0.1) {
+  lapply(graph_list, function(g) {
+    n <- vcount(g)
+    k <- round(n * missing_pct)
+    if (n > 0 && k > 0) {
+      to_remove <- sample(V(g), k)
+      # delete nodes and their edges
+      g <- delete_vertices(g, to_remove)
+    }
+    g
+  })
+}
 
-##### Spurious nodes with number of ties decided by network degree distribution
+# 10% random node deletion
+EFloMNodes.01 <- nodeMissRand(iFlo, 0.1)
+EAc1MNodes.01 <- nodeMissRand(iAc1, 0.1)
+EAc2MNodes.01 <- nodeMissRand(iAc2, 0.1)
 
+##### Simple node addition #####
 
+# Simple node addition function
+nodeAddRand <- function(graph_list, error_pct = 0.1, edge_number = 2) {
+  lapply(graph_list, function(g) {
+    
+    n_old <- vcount(g)
+    n_new <- round(n_old * error_pct)
+    if (n_new <= 0) return(g) 
+    g <- add_vertices(g, n_new)
+    new_vs <- which(is.na(V(g)$NodeID))
+    
+    # for each new v, sample 'edge_number' distinct old nodes
+    edge_vec <- integer(0)
+    for (v in new_vs) {
+      k <- min(edge_number, n_old)
+      targets <- sample(seq_len(n_old), k, replace = FALSE)
+      # rbind(tail, head) then flatten
+      pairs <- rbind(rep(v, k), targets)
+      edge_vec <- c(edge_vec, as.vector(pairs))
+    }
+    
+    g <- add_edges(g, edge_vec)
+    g
+  })
+}
 
-EAc1NodeAdd[[1]] %v% "NodeID"
-#EFlo.02 <- TieAddIterative(FloSim, 0.1)
-is.directed(Ac1Sim[[1]])
-is.directed(FloSim[[1]])
-EAc2.01[[1]]
-Ac2Sim[[1]]
-EFlo.01[[1]] %v% "NodeID"
-EFlo.01[1]
-FloSim[[1]]
-EFlo.Test3[[1]]
+# 10% random node addition
+EFloANodes.01 <- nodeAddRand(iFlo, 0.1, 2)
+EAc1ANodes.01 <- nodeAddRand(iAc1, 0.1, 2)
+EAc2ANodes.01 <- nodeAddRand(iAc2, 0.1, 2)
 
-intersect(Ac1Sim[[1]] %v% "NodeID", EAc1NodeAdd[[1]] %v% "NodeID")
-##### TEST FOR NODE ADD FUNCTIONALITY #####
+##### Degree distribution node addition #####
 
-detach(package:igraph)
-EfloTest <- NodeAddRand_DD(FloSim[1], 0.1)
-FloTestdf <- compute_metrics(EFlo.03, "Test")
+# Function to add nodes with N ties determined by sampling degree distribution
+NodeAddRandDD <- function(graph_list, add_pct = 0.1) {
+  lapply(graph_list, function(g) {
+    
+    n0    <- igraph::vcount(g)
+    n_new <- round(n0 * add_pct)
+    
+    if (n_new > 0) {
+      g      <- igraph::add_vertices(g, n_new)
+      new_vs <- seq(n0 + 1, igraph::vcount(g))
+      deg0   <- igraph::degree(g, v = seq_len(n0), mode = "all") # vector of node degrees
+      
+      for (v in new_vs) {
+        k <- sample(deg0, 1) # sample existing node degrees
+        k <- min(k, n0)
+        if (k > 0) {
+          peers <- sample(seq_len(n0), k)
+          g     <- igraph::add_edges(g, c(rbind(v, peers))) # randomly add ties
+          # option here to weight sampling by degree, preferential attachment style
+        }
+      }
+    }
+    g
+  })
+}
+
+# 10% random node addition with degree distribution sampling
+EFloANodesDD.01 <- nodeAddRand(iFlo, 0.1)
+EAc1ANodesDD.01 <- nodeAddRand(iAc1, 0.1)
+EAc2ANodesDD.01 <- nodeAddRand(iAc2, 0.1)
 
 ######################################### Store data ###########################################
 
+# Get the network metrics of the perturbed networks
+
 ##### Global network metrics #####
-EFlo.01.df <- compute_metrics(EFlo.01, "EFlo")
-EAc1.01.df <- compute_metrics(EAc1.01, "EAc1")
-EAc2.01.df <- compute_metrics(EAc2.01, "EAc2")
-EAc1NodeAdd.df <- compute_metrics(EAc1NodeAdd, "EAc1NodeAdd")
+EFloMTies.01.df <- computeMetrics(EFloMTies.01, "EFlo")
+EAc1MTies.01.df <- computeMetrics(EAc1MTies.01, "EAc1")
+EAc2MTies.01.df <- computeMetrics(EAc2MTies.01, "EAc2")
+
 
 ##### Node level metrics #####
-library(igraph)
 
-EFlo.01 <- compute_centrality(EFlo.01)
-EAc1.01 <- compute_centrality(EAc1.01)
-EAc2.01 <- compute_centrality(EAc2.01)
-ENodeAdd <- compute_centrality(EAc1NodeAdd)
-
-detach(package:igraph)
-
+EFloMTies.01 <- computeCentrality(EFloMTies.01)
+EAc1MTies.01 <- computeCentrality(EAc1MTies.01)
+EAc2MTies.01 <- computeCentrality(EAc2MTies.01)
 
 ################################# Dataframe to compare centrality scores ##########################
+
+##### Function to compute all relevant centrality metrics and store in dataframe #####
+
+# This function is gross but the repeated intersect and match calls are actually really trivial computationally
+# what really needs to change is to separate these out into separate functions for each metric and have them
+# return a value which I can store in a dataframe normally, not by creating one
 
 # IMPORTANT: I have removed the code squaring the pearson correlation because I'm not 100% on 
 # the justification for squaring it
 
-##### Function to compute all relevant centrality metrics and store in dataframe #####
-
-compute_bias_metrics7 <- function(original_sim, perturbed_sim, name) {
+computeNodeBias <- function(original_sim, perturbed_sim, name) {
   data.frame(
     id = paste0(name, seq_along(original_sim)),
     
     deg_robust_cor = sapply(seq_along(original_sim), function(i) {
       # Match nodes by NodeID
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor((original_sim[[i]] %v% "Degree")[orig_indices], 
-          (perturbed_sim[[i]] %v% "Degree")[pert_indices], 
+      cor((V(original_sim[[i]])$Degree)[orig_indices], 
+          (V(perturbed_sim[[i]])$Degree)[pert_indices], 
           use = "complete.obs")
     }),
     
     bet_robust_cor = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor((original_sim[[i]] %v% "Betweenness")[orig_indices], 
-          (perturbed_sim[[i]] %v% "Betweenness")[pert_indices], 
+      cor((V(original_sim[[i]])$Betweenness)[orig_indices], 
+          (V(perturbed_sim[[i]])$Betweenness)[pert_indices], 
           use = "complete.obs")
     }),
     
     clo_robust_cor = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor((original_sim[[i]] %v% "Closeness")[orig_indices], 
-          (perturbed_sim[[i]] %v% "Closeness")[pert_indices], 
+      cor((V(original_sim[[i]])$Closeness)[orig_indices], 
+          (V(perturbed_sim[[i]])$Closeness)[pert_indices], 
           use = "complete.obs")
     }),
     
     eig_robust_cor = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor((original_sim[[i]] %v% "Eigenvector")[orig_indices], 
-          (perturbed_sim[[i]] %v% "Eigenvector")[pert_indices], 
+      cor((V(original_sim[[i]])$Eigenvector)[orig_indices], 
+          (V(perturbed_sim[[i]])$Eigenvector)[pert_indices], 
           use = "complete.obs")
     }),
     
     pg_robust_cor = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor((original_sim[[i]] %v% "PageRank")[orig_indices], 
-          (perturbed_sim[[i]] %v% "PageRank")[pert_indices], 
+      cor((V(original_sim[[i]])$PageRank)[orig_indices], 
+          (V(perturbed_sim[[i]])$PageRank)[pert_indices], 
           use = "complete.obs")
     }),
     
     deg_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor(rank((original_sim[[i]] %v% "Degree")[orig_indices]), 
-          rank((perturbed_sim[[i]] %v% "Degree")[pert_indices]), 
+      cor(rank((V(original_sim[[i]])$Degree)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$Degree)[pert_indices]), 
           method = "spearman", use = "complete.obs")
     }),
     
     bet_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor(rank((original_sim[[i]] %v% "Betweenness")[orig_indices]), 
-          rank((perturbed_sim[[i]] %v% "Betweenness")[pert_indices]), 
+      cor(rank((V(original_sim[[i]])$Betweenness)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$Betweenness)[pert_indices]), 
           method = "spearman", use = "complete.obs")
     }),
     
     clo_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor(rank((original_sim[[i]] %v% "Closeness")[orig_indices]), 
-          rank((perturbed_sim[[i]] %v% "Closeness")[pert_indices]), 
+      cor(rank((V(original_sim[[i]])$Closeness)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$Closeness)[pert_indices]), 
           method = "spearman", use = "complete.obs")
     }),
     
     eig_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor(rank((original_sim[[i]] %v% "Eigenvector")[orig_indices]), 
-          rank((perturbed_sim[[i]] %v% "Eigenvector")[pert_indices]), 
+      cor(rank((V(original_sim[[i]])$Eigenvector)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$Eigenvector)[pert_indices]), 
           method = "spearman", use = "complete.obs")
     }),
     
     pg_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(original_sim[[i]] %v% "NodeID", perturbed_sim[[i]] %v% "NodeID")
-      orig_indices <- match(common_ids, original_sim[[i]] %v% "NodeID")
-      pert_indices <- match(common_ids, perturbed_sim[[i]] %v% "NodeID")
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
       
-      cor(rank((original_sim[[i]] %v% "PageRank")[orig_indices]), 
-          rank((perturbed_sim[[i]] %v% "PageRank")[pert_indices]), 
+      cor(rank((V(original_sim[[i]])$PageRank)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$PageRank)[pert_indices]), 
           method = "spearman", use = "complete.obs")
     })
   )
@@ -311,16 +421,15 @@ compute_bias_metrics7 <- function(original_sim, perturbed_sim, name) {
 
 ##### Compute bias #####
 
-# Compute bias for all network simulations
-bias_FloSim <- compute_bias_metrics7(FloSim, EFlo.01, "FloSim")
-bias_FloSim1 <- compute_bias_metrics7(FloSim, EFlo.01, "FloSimTest")
-bias_Ac1Sim <- compute_bias_metrics7(Ac1Sim, EAc1.01, "Ac1Sim")
-bias_Ac2Sim <- compute_bias_metrics7(Ac2Sim, EAc2.01, "Ac2Sim")
-bias_NodeAdd <- compute_bias_metrics7(Ac1Sim, ENodeAdd, "NodeTest")
+# Compute bias for random tie missingness simulations
+biasEFloMTies.01 <- computeNodeBias(iFlo, EFloMTies.01, "Flo")
+biasEAc1MTies.01 <- computeNodeBias(iAc1, EAc1MTies.01, "Ac1")
+biasEAc2MTies.01 <- computeNodeBias(iAc2, EAc1MTies.01, "Ac2")
+
 
 
 # Combine all results into a single dataframe
-metric_bias <- bind_rows(bias_FloSim, bias_Ac1Sim, bias_Ac2Sim)
+metric_bias <- bind_rows(biasEFloMTies.01, biasEAc1MTies.01, biasEAc2MTies.01)
 
 # Add in original full network ground truth metrics
 bias_GTadd <- left_join(metric_bias, GTAll, by = "id")
@@ -342,7 +451,7 @@ ggplot(data = bias_long,
   geom_boxplot() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(bias_GTadd, aes(x = density, y = bet_robust_srcc)) +
+ggplot(bias_GTadd, aes(x = clustering, y = bet_robust_cor)) +
   geom_point(alpha = 0.6, color = "blue") +
   theme_minimal() 
 
