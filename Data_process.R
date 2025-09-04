@@ -42,3 +42,4 @@ acct2 <- ergm(ac2 ~ edges + nodematch("gender") + nodematch("job"))
 summary(acct2)
 
 rm(ac1, ac2, acct)
+

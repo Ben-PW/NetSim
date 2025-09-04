@@ -6,11 +6,12 @@
 #that by matching nodes based on their ID, comparison of GT networks with error networks 
 #that have had nodes added or removed is much more robust and simpler to implement 
 
-#I succeeded in the above, but at what cost
+#I have also refactored the code to rely on the igraph package. This has made all functions more robust 
+#and far simpler
 
 ####################################################################################################
 
-detach(package:networkdata)
+
 
 ################################# Randomisation test ###########################################
 # Alter this seed to check simulated networks are actually changing
@@ -26,6 +27,8 @@ library(dplyr)
 
 source('Data_process.R')
 source('Compute_NetStats.R')
+
+detach(package:networkdata)
 
 ####################################### Simulate networks #######################################
 
@@ -99,7 +102,7 @@ computeMetrics <- function(graph_list, name) {
     size = sapply(graph_list, vcount),
     
     APL = sapply(graph_list, function(g) {
-      # all‐pairs shortest paths; exclude Infs
+      # all pairs shortest paths - exclude inf
       dist_mat <- distances(g, mode = "all")
       mean(dist_mat[is.finite(dist_mat)], na.rm = TRUE)
     })
@@ -153,7 +156,7 @@ tieMissRand <- function(graph_list, missing_pct = 0.1) {
     if (m > 0 && k > 0) {
       # sample k random edges
       to_remove <- sample(E(g), k)
-      # delete_edges returns a new graph
+      
       g <- delete_edges(g, to_remove)
     }
     g
@@ -182,11 +185,10 @@ tieAddRand <- function(graph_list, add_pct = 0.1) {
         
         to_add <- sample(E(comp_g), num_add)
         
-        # Get their endpoint pairs and flatten for add_edges()
+        # Get endpoints pairs and flatten for add_edges()
         ed_pairs <- ends(comp_g, to_add)
         edge_vec <- as.vector(t(ed_pairs))
         
-        # Add 
         g <- add_edges(g, edge_vec)
       }
     }
@@ -436,6 +438,8 @@ bias_GTadd <- left_join(metric_bias, GTAll, by = "id")
 
 
 ########################################### Visualisations ######################################
+
+# Placeholder visualisations for now 
 
 library(ggplot2)
 library(reshape2)
