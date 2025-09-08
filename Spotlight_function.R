@@ -88,17 +88,20 @@ spotlight <- function(g,
   
   di <- V(g)$dist_seed
   
+  # Figure out which of these is most suitable later, for now it was pretty easy to 
+  # just include them all 
+  
   d_edge <- switch(combiner,
-                   mean = rowMeans(cbind(di[ends_mat[,1]], di[ends_mat[,2]]), na.rm = TRUE),
-                   min = pmin(di[ends_mat[,1]], di[ends_mat[,2]], na.rm = TRUE),
-                   max = pmax(di[ends_mat[,1]], di[ends_mat[,2]], na.rm = TRUE),
-                   sum = di[ends_mat[,1]] + di[ends_mat[,2]],
-                   harmonic = 2 / (1/di[ends_mat[,1]] + 1/di[ends_mat[,2]])
+                   mean = rowMeans(cbind(di[ends_mat[,1]], di[ends_mat[,2]]), na.rm = TRUE), # mean of node distances
+                   min = pmin(di[ends_mat[,1]], di[ends_mat[,2]], na.rm = TRUE), # min node distance
+                   max = pmax(di[ends_mat[,1]], di[ends_mat[,2]], na.rm = TRUE), # max node distance
+                   sum = di[ends_mat[,1]] + di[ends_mat[,2]], # sum node distances (unlikely)
+                   harmonic = 2 / (1/di[ends_mat[,1]] + 1/di[ends_mat[,2]]) # weight towards min
   )
   
   d_edge[is.infinite(d_edge)] <- NA
   
-  E(g)$edge_probs <- d_edge # estimated prob of edge observation
+  E(g)$edge_dist <- d_edge # estimated prob of edge observation
   
   # Store seed ID 
   graph_attr(g, "seed") <- V(g)$NodeID[seed]
@@ -115,12 +118,17 @@ test5 <- spotlight(Ac2Sim[[1]], seed = 19, combiner = "harmonic")
 V(test)$dist_seed # distances are being accurately stored
 V(test)$NodeID
 
-E(test1)$edge_probs
-E(test2)$edge_probs
-E(test3)$edge_probs
-E(test4)$edge_probs
-E(test5)$edge_probs
+E(test1)$edge_dist
+E(test2)$edge_dist
+E(test3)$edge_dist
+E(test4)$edge_dist
+E(test5)$edge_dist
 
 diameter(test) # inverse geodesic reflects actual path lengths
 
 plot(test)
+
+##### Version 3 #####
+
+# Make it so it works on lists of igraph objects, instead of just 1
+
