@@ -164,9 +164,25 @@ tieMissRand <- function(graph_list, missing_pct = 0.1) {
 }
 
 # 10% random tie deletion
-EFloMTies.01 <- tieMissRand(iFlo, 0.3)
-EAc1MTies.01 <- tieMissRand(iAc1, 0.3)
-EAc2MTies.01 <- tieMissRand(iAc2, 0.3)
+EFloMTies.01 <- tieMissRand(iFlo, 0.1)
+EAc1MTies.01 <- tieMissRand(iAc1, 0.1)
+EAc2MTies.01 <- tieMissRand(iAc2, 0.1)
+
+EFloMTies.02 <- tieMissRand(iFlo, 0.2)
+EAc1MTies.02 <- tieMissRand(iAc1, 0.2)
+EAc2MTies.02 <- tieMissRand(iAc2, 0.2)
+
+EFloMTies.03 <- tieMissRand(iFlo, 0.3)
+EAc1MTies.03 <- tieMissRand(iAc1, 0.3)
+EAc2MTies.03 <- tieMissRand(iAc2, 0.3)
+
+EFloMTies.04 <- tieMissRand(iFlo, 0.4)
+EAc1MTies.04 <- tieMissRand(iAc1, 0.4)
+EAc2MTies.04 <- tieMissRand(iAc2, 0.4)
+
+EFloMTies.05 <- tieMissRand(iFlo, 0.5)
+EAc1MTies.05 <- tieMissRand(iAc1, 0.5)
+EAc2MTies.05 <- tieMissRand(iAc2, 0.5)
 
 ##### Simple tie addition #####
 
@@ -296,6 +312,22 @@ EFloMTies.01.df <- computeMetrics(EFloMTies.01, "EFlo")
 EAc1MTies.01.df <- computeMetrics(EAc1MTies.01, "EAc1")
 EAc2MTies.01.df <- computeMetrics(EAc2MTies.01, "EAc2")
 
+EFloMTies.02.df <- computeMetrics(EFloMTies.02, "EFlo")
+EAc1MTies.02.df <- computeMetrics(EAc1MTies.02, "EAc1")
+EAc2MTies.02.df <- computeMetrics(EAc2MTies.02, "EAc2")
+
+EFloMTies.03.df <- computeMetrics(EFloMTies.03, "EFlo")
+EAc1MTies.03.df <- computeMetrics(EAc1MTies.03, "EAc1")
+EAc2MTies.03.df <- computeMetrics(EAc2MTies.03, "EAc2")
+
+EFloMTies.04.df <- computeMetrics(EFloMTies.04, "EFlo")
+EAc1MTies.04.df <- computeMetrics(EAc1MTies.04, "EAc1")
+EAc2MTies.04.df <- computeMetrics(EAc2MTies.04, "EAc2")
+
+EFloMTies.05.df <- computeMetrics(EFloMTies.05, "EFlo")
+EAc1MTies.05.df <- computeMetrics(EAc1MTies.05, "EAc1")
+EAc2MTies.05.df <- computeMetrics(EAc2MTies.05, "EAc2")
+
 
 ##### Node level metrics #####
 
@@ -303,11 +335,28 @@ EFloMTies.01 <- computeCentrality(EFloMTies.01)
 EAc1MTies.01 <- computeCentrality(EAc1MTies.01)
 EAc2MTies.01 <- computeCentrality(EAc2MTies.01)
 
+EFloMTies.02 <- computeCentrality(EFloMTies.02)
+EAc1MTies.02 <- computeCentrality(EAc1MTies.02)
+EAc2MTies.02 <- computeCentrality(EAc2MTies.02)
+
+EFloMTies.03 <- computeCentrality(EFloMTies.03)
+EAc1MTies.03 <- computeCentrality(EAc1MTies.03)
+EAc2MTies.03 <- computeCentrality(EAc2MTies.03)
+
+EFloMTies.04 <- computeCentrality(EFloMTies.04)
+EAc1MTies.04 <- computeCentrality(EAc1MTies.04)
+EAc2MTies.04 <- computeCentrality(EAc2MTies.04)
+
+EFloMTies.05 <- computeCentrality(EFloMTies.05)
+EAc1MTies.05 <- computeCentrality(EAc1MTies.05)
+EAc2MTies.05 <- computeCentrality(EAc2MTies.05)
+
+
 ################################# Dataframe to compare centrality scores ##########################
 
 ##### Function to compute all relevant centrality metrics and store in dataframe #####
 
-# This function is gross but the repeated intersect and match calls are actually really trivial computationally
+# This function is gross but the repeated intersect and match calls are trivial computationally
 # what really needs to change is to separate these out into separate functions for each metric and have them
 # return a value which I can store in a dataframe normally, not by creating one
 
@@ -426,7 +475,23 @@ computeNodeBias <- function(original_sim, perturbed_sim, name) {
 # Compute bias for random tie missingness simulations
 biasEFloMTies.01 <- computeNodeBias(iFlo, EFloMTies.01, "Flo")
 biasEAc1MTies.01 <- computeNodeBias(iAc1, EAc1MTies.01, "Ac1")
-biasEAc2MTies.01 <- computeNodeBias(iAc2, EAc1MTies.01, "Ac2")
+biasEAc2MTies.01 <- computeNodeBias(iAc2, EAc2MTies.01, "Ac2")
+
+biasEFloMTies.02 <- computeNodeBias(iFlo, EFloMTies.02, "Flo")
+biasEAc1MTies.02 <- computeNodeBias(iAc1, EAc1MTies.02, "Ac1")
+biasEAc2MTies.02 <- computeNodeBias(iAc2, EAc2MTies.02, "Ac2")
+
+biasEFloMTies.03 <- computeNodeBias(iFlo, EFloMTies.03, "Flo")
+biasEAc1MTies.03 <- computeNodeBias(iAc1, EAc1MTies.03, "Ac1")
+biasEAc2MTies.03 <- computeNodeBias(iAc2, EAc2MTies.03, "Ac2")
+
+biasEFloMTies.04 <- computeNodeBias(iFlo, EFloMTies.04, "Flo")
+biasEAc1MTies.04 <- computeNodeBias(iAc1, EAc1MTies.04, "Ac1")
+biasEAc2MTies.04 <- computeNodeBias(iAc2, EAc2MTies.04, "Ac2")
+
+biasEFloMTies.05 <- computeNodeBias(iFlo, EFloMTies.05, "Flo")
+biasEAc1MTies.05 <- computeNodeBias(iAc1, EAc1MTies.05, "Ac1")
+biasEAc2MTies.05 <- computeNodeBias(iAc2, EAc2MTies.05, "Ac2")
 
 
 
@@ -459,4 +524,118 @@ ggplot(bias_GTadd, aes(x = clustering, y = bet_robust_cor)) +
   geom_point(alpha = 0.6, color = "blue") +
   theme_minimal() 
 
+########################################### Bigger visualisation ##########################
 
+#Combine metric dataframes
+
+library(tidyr)
+
+# Add error level column to each df
+EFloMTies.01.df$error <- 0.1
+EAc1MTies.01.df$error <- 0.1
+EAc2MTies.01.df$error <- 0.1
+
+EFloMTies.02.df$error <- 0.2
+EAc1MTies.02.df$error <- 0.2
+EAc2MTies.02.df$error <- 0.2
+
+EFloMTies.03.df$error <- 0.3
+EAc1MTies.03.df$error <- 0.3
+EAc2MTies.03.df$error <- 0.3
+
+EFloMTies.04.df$error <- 0.4
+EAc1MTies.04.df$error <- 0.4
+EAc2MTies.04.df$error <- 0.4
+
+EFloMTies.05.df$error <- 0.5
+EAc1MTies.05.df$error <- 0.5
+EAc2MTies.05.df$error <- 0.5
+
+#######################################################
+
+metrics_all <- bind_rows(
+  EFloMTies.01.df, EFloMTies.02.df, EFloMTies.03.df, EFloMTies.04.df, EFloMTies.05.df,
+  EAc1MTies.01.df, EAc1MTies.02.df, EAc1MTies.03.df, EAc1MTies.04.df, EAc1MTies.05.df,
+  EAc2MTies.01.df, EAc2MTies.02.df, EAc2MTies.03.df, EAc2MTies.04.df, EAc2MTies.05.df
+)
+
+
+metrics_all <- metrics_all %>% select(-size)
+
+
+metrics_long <- metrics_all %>%
+  tidyr::pivot_longer(cols = c(density, dcent, clustering, APL),
+                      names_to = "Metric", values_to = "Value") %>%
+  mutate(Network = substr(id, 1, 4))   # "EFlo", "EAc1", "EAc2"
+
+# Summarise mean and SD by metric, error, and network
+metrics_summary <- metrics_long %>%
+  group_by(Metric, error, Network) %>%
+  summarise(
+    mean_val = mean(Value, na.rm = TRUE),
+    sd_val   = sd(Value, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    sd_lower = mean_val - sd_val,
+    sd_upper = mean_val + sd_val
+  )
+
+######################################## Plot global metrics ########################################
+
+ggplot(metrics_summary, aes(x = error, y = mean_val, color = Network, group = Network)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = sd_lower, ymax = sd_upper, fill = Network), alpha = 0.2, colour = NA) +
+  facet_wrap(~ Metric, scales = "free_y") +
+  labs(x = "Missingness proportion",
+       y = "Average value ± 1 SD",
+       title = "Global network metrics under increasing tie missingness") +
+  theme_minimal()
+
+################################# Same for node level
+
+# Combine centrality robustness 
+
+# Add error level 
+biasEFloMTies.01$error <- 0.1; biasEAc1MTies.01$error <- 0.1; biasEAc2MTies.01$error <- 0.1
+biasEFloMTies.02$error <- 0.2; biasEAc1MTies.02$error <- 0.2; biasEAc2MTies.02$error <- 0.2
+biasEFloMTies.03$error <- 0.3; biasEAc1MTies.03$error <- 0.3; biasEAc2MTies.03$error <- 0.3
+biasEFloMTies.04$error <- 0.4; biasEAc1MTies.04$error <- 0.4; biasEAc2MTies.04$error <- 0.4
+biasEFloMTies.05$error <- 0.5; biasEAc1MTies.05$error <- 0.5; biasEAc2MTies.05$error <- 0.5
+
+
+bias_all <- bind_rows(
+  biasEFloMTies.01, biasEFloMTies.02, biasEFloMTies.03, biasEFloMTies.04, biasEFloMTies.05,
+  biasEAc1MTies.01, biasEAc1MTies.02, biasEAc1MTies.03, biasEAc1MTies.04, biasEAc1MTies.05,
+  biasEAc2MTies.01, biasEAc2MTies.02, biasEAc2MTies.03, biasEAc2MTies.04, biasEAc2MTies.05
+)
+
+
+bias_long <- bias_all %>%
+  tidyr::pivot_longer(cols = -c(id, error),
+                      names_to = "Metric", values_to = "Correlation") %>%
+  mutate(Network = substr(id, 1, 3))
+
+# Summarise mean ± 1 SD by metric, error, and network
+bias_summary <- bias_long %>%
+  group_by(Metric, error, Network) %>%
+  summarise(
+    mean_val = mean(Correlation, na.rm = TRUE),
+    sd_val   = sd(Correlation, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    sd_lower = mean_val - sd_val,
+    sd_upper = mean_val + sd_val
+  )
+
+######################################## Plot centrality robustness ########################################
+
+ggplot(bias_summary, aes(x = error, y = mean_val, color = Network, group = Network)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = sd_lower, ymax = sd_upper, fill = Network), alpha = 0.2, colour = NA) +
+  facet_wrap(~ Metric, scales = "free_y") +
+  labs(x = "Missingness proportion",
+       y = "Average correlation ± 1 SD",
+       title = "Centrality robustness under increasing tie missingness") +
+  theme_minimal()
