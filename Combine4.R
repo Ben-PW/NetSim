@@ -638,4 +638,6 @@ ggplot(bias_summary, aes(x = error, y = mean_val, color = Network, group = Netwo
   labs(x = "Missingness proportion",
        y = "Average correlation ± 1 SD",
        title = "Centrality robustness under increasing tie missingness") +
+  coord_cartesian(ylim = c(-1, 1)) +
+  theme_minimal()
   theme_minimal()
