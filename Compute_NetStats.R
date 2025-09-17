@@ -22,6 +22,28 @@ IDNodes <- function(graph_list){
   })
 }
 
+# Return matching Node IDs
+
+matchNodes <- function(g1, g2) {
+  common_ids <- intersect(V(g1)$NodeID, V(g2)$NodeID)
+  list(
+    x = match(common_ids, V(g1)$NodeID),
+    y = match(common_ids, V(g2)$NodeID)
+  )
+}
+
+# Correlation wrapper for bias calculation
+
+correlateNodes <- function(x, y, method = "pearson") {
+  if (method == "pearson") {
+    cor(x, y, use = "complete.obs")
+  } else if (method == "spearman") {
+    cor(rank(x), rank(y), method = "spearman", use = "complete.obs")
+  } else {
+    stop("Method must be 'pearson' or 'spearman'")
+  }
+}
+
 ##### Compute network level metrics #####
 
 # I think I need to address the rounding here
@@ -82,6 +104,138 @@ computeCentrality <- function(graph_list){
 # Compute bias metrics
 
 # This function is gross and should probably be changed somehow
+computeNodeBias <- function(original_sim, perturbed_sim, name) {
+  data.frame(
+    id = paste0(name, seq_along(original_sim)),
+    
+    deg_robust_cor = sapply(seq_along(original_sim), function(i) {
+      # Match nodes by NodeID
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor((V(original_sim[[i]])$Degree)[orig_indices], 
+          (V(perturbed_sim[[i]])$Degree)[pert_indices], 
+          use = "complete.obs")
+    }),
+    
+    bet_robust_cor = sapply(seq_along(original_sim), function(i) {
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor((V(original_sim[[i]])$Betweenness)[orig_indices], 
+          (V(perturbed_sim[[i]])$Betweenness)[pert_indices], 
+          use = "complete.obs")
+    }),
+    
+    clo_robust_cor = sapply(seq_along(original_sim), function(i) {
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor((V(original_sim[[i]])$Closeness)[orig_indices], 
+          (V(perturbed_sim[[i]])$Closeness)[pert_indices], 
+          use = "complete.obs")
+    }),
+    
+    eig_robust_cor = sapply(seq_along(original_sim), function(i) {
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor((V(original_sim[[i]])$Eigenvector)[orig_indices], 
+          (V(perturbed_sim[[i]])$Eigenvector)[pert_indices], 
+          use = "complete.obs")
+    }),
+    
+    pg_robust_cor = sapply(seq_along(original_sim), function(i) {
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor((V(original_sim[[i]])$PageRank)[orig_indices], 
+          (V(perturbed_sim[[i]])$PageRank)[pert_indices], 
+          use = "complete.obs")
+    }),
+    
+    deg_robust_srcc = sapply(seq_along(original_sim), function(i) {
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor(rank((V(original_sim[[i]])$Degree)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$Degree)[pert_indices]), 
+          method = "spearman", use = "complete.obs")
+    }),
+    
+    bet_robust_srcc = sapply(seq_along(original_sim), function(i) {
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor(rank((V(original_sim[[i]])$Betweenness)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$Betweenness)[pert_indices]), 
+          method = "spearman", use = "complete.obs")
+    }),
+    
+    clo_robust_srcc = sapply(seq_along(original_sim), function(i) {
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor(rank((V(original_sim[[i]])$Closeness)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$Closeness)[pert_indices]), 
+          method = "spearman", use = "complete.obs")
+    }),
+    
+    eig_robust_srcc = sapply(seq_along(original_sim), function(i) {
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor(rank((V(original_sim[[i]])$Eigenvector)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$Eigenvector)[pert_indices]), 
+          method = "spearman", use = "complete.obs")
+    }),
+    
+    pg_robust_srcc = sapply(seq_along(original_sim), function(i) {
+      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
+      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
+      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
+      
+      cor(rank((V(original_sim[[i]])$PageRank)[orig_indices]), 
+          rank((V(perturbed_sim[[i]])$PageRank)[pert_indices]), 
+          method = "spearman", use = "complete.obs")
+    })
+  )
+}
+
+centrality <- "Degree"
+
+correlateDegree <- function(g1, g2, method){
+  IDs <- matchNodes(original_sim, perturbed_sim)
+  correlateNodes(
+    V(g1)$Degree[IDs$x],
+    V(g2)$Degree[IDs$y],
+    method
+  )
+}
+
+correlateCentrality <- function(g1, g2, centrality, method){
+  IDs <- matchNodes(g1, g2)
+  correlateNodes(
+    V(g1)[[centrality]][IDs$x],
+    V(g2)[[centrality]][IDs$y],
+    method
+  )
+}
+
+#correlateCentrality <- function(g1, g2, centrality, method){
+#  IDs <- matchNodes(g1, g2)
+#}
+# correlateCentrality(iFlo[[1]],EFloMTies.05[[1]], "Degree", "pearson")
+
 computeNodeBias <- function(original_sim, perturbed_sim, name) {
   data.frame(
     id = paste0(name, seq_along(original_sim)),
