@@ -155,7 +155,7 @@ tieMissRand <- function(graph_list, missing_pct = 0.1) {
     k <- round(m * missing_pct)
     if (m > 0 && k > 0) {
       # sample k random edges
-      to_remove <- sample(E(g), k)
+      to_remove <- sample(E(g), k, replace = F)
       
       g <- delete_edges(g, to_remove)
     }
@@ -639,5 +639,4 @@ ggplot(bias_summary, aes(x = error, y = mean_val, color = Network, group = Netwo
        y = "Average correlation ± 1 SD",
        title = "Centrality robustness under increasing tie missingness") +
   coord_cartesian(ylim = c(-1, 1)) +
-  theme_minimal()
   theme_minimal()
