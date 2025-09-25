@@ -19,6 +19,7 @@
 # the seed
 
 library(igraph)
+library(ggraph)
 
 # Spotlight seed inverse-distance 
 spotlight <- function(g) {
@@ -101,7 +102,7 @@ spotlight <- function(g,
   
   d_edge[is.infinite(d_edge)] <- NA
   
-  E(g)$edge_dist <- d_edge # estimated prob of edge observation
+  E(g)$weight <- d_edge # estimated prob of edge observation
   
   # Store seed ID 
   graph_attr(g, "seed") <- V(g)$NodeID[seed]
@@ -109,24 +110,34 @@ spotlight <- function(g,
   return(g)
 }
 
-test1 <- spotlight(Ac2Sim[[1]], seed = 19, combiner = "mean") # function actually works
-test2 <- spotlight(Ac2Sim[[1]], seed = 19, combiner = "min")
-test3 <- spotlight(Ac2Sim[[1]], seed = 19, combiner = "max")
-test4 <- spotlight(Ac2Sim[[1]], seed = 19, combiner = "sum")
-test5 <- spotlight(Ac2Sim[[1]], seed = 19, combiner = "harmonic")
+test1 <- spotlight(iAc2[[1]], seed = 19, combiner = "mean") # function actually works
+test2 <- spotlight(iAc2[[1]], seed = 19, combiner = "min")
+test3 <- spotlight(iAc2[[1]], seed = 19, combiner = "max")
+test4 <- spotlight(iAc2[[1]], seed = 19, combiner = "sum")
+test5 <- spotlight(iAc2[[1]], seed = 19, combiner = "harmonic")
 
 V(test)$dist_seed # distances are being accurately stored
 V(test)$NodeID
 
 E(test1)$edge_dist
-E(test2)$edge_dist
+E(test2)$weight
 E(test3)$edge_dist
 E(test4)$edge_dist
 E(test5)$edge_dist
 
 diameter(test) # inverse geodesic reflects actual path lengths
 
-plot(test)
+plot(test2)
+
+test2
+
+?graph_from_adjacency_matrix
+
+is_weighted(test2)
+is_directed(test2)
+
+?igraph::plot.igraph
+?plot
 
 ##### Version 3 #####
 

@@ -62,8 +62,8 @@ undirect <- function(graph_list) {
 
 ##### Undirect networks #####
 
-Ac1Sim <- undirect(iAc1)
-Ac2Sim <- undirect(iAc2)
+iAc1 <- undirect(iAc1)
+iAc2 <- undirect(iAc2)
 
 ###################################### Assign ID to nodes ############################
 ##### Function to assign node ID #####
@@ -139,8 +139,6 @@ computeCentrality <- function(graph_list){
 iFlo <- computeCentrality(iFlo)
 iAc1 <- computeCentrality(iAc1)
 iAc2 <- computeCentrality(iAc2)
-
-
 
 ######################################### Alter networks ########################################
 
