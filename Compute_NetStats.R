@@ -24,12 +24,27 @@ IDNodes <- function(graph_list){
 
 # Return matching Node IDs
 
+# This function did not return nodes in the same order, meaning correlations were 
+# incorrect and artificially low
+
+#matchNodes <- function(g1, g2) {
+#  common_ids <- intersect(V(g1)$NodeID, V(g2)$NodeID)
+#  list(
+#    x = match(common_ids, V(g1)$NodeID),
+#    y = match(common_ids, V(g2)$NodeID)
+#  )
+#}
+
 matchNodes <- function(g1, g2) {
   common_ids <- intersect(V(g1)$NodeID, V(g2)$NodeID)
-  list(
-    x = match(common_ids, V(g1)$NodeID),
-    y = match(common_ids, V(g2)$NodeID)
-  )
+  
+  # Order according to g1
+  x <- match(common_ids, V(g1)$NodeID)
+  
+  # Get the same common_ids in that order then match in g2
+  y <- match(V(g1)$NodeID[x], V(g2)$NodeID)
+  
+  list(x = x, y = y)
 }
 
 # Correlation wrapper for bias calculation
@@ -222,19 +237,41 @@ correlateDegree <- function(g1, g2, method){
   )
 }
 
-correlateCentrality <- function(g1, g2, centrality, method){
-  IDs <- matchNodes(g1, g2)
-  correlateNodes(
-    V(g1)[[centrality]][IDs$x],
-    V(g2)[[centrality]][IDs$y],
-    method
-  )
-}
+# I remember the problem here, you can't extract Igraph attributes using [[]], will need
+# to find another method
 
 #correlateCentrality <- function(g1, g2, centrality, method){
 #  IDs <- matchNodes(g1, g2)
+#  correlateNodes(
+#    V(g1)[[centrality]][IDs$x],
+#    V(g2)[[centrality]][IDs$y],
+#    method
+#  )
 #}
-# correlateCentrality(iFlo[[1]],EFloMTies.05[[1]], "Degree", "pearson")
+
+correlateCentrality <- function(g1, g2, centrality, method){
+  IDs <- matchNodes(g1, g2)
+  x <- vertex_attr(g1, centrality, index = IDs$x)
+  y <- vertex_attr(g2, centrality, index = IDs$y)
+  cor(x, y, method = method, use = "complete.obs")
+}
+
+IDs <- matchNodes(iFlo[[100]], EFloMTies.05[[100]])
+x <- vertex_attr(iFlo[[100]], "Degree", index = IDs$x)
+y <- vertex_attr(EFloMTies.05[[100]], "Degree", index = IDs$y)
+x
+y
+
+IDs <- matchNodes(iFlo[[100]], EFloMTies.05[[100]])
+
+V(iFlo[[100]])$NodeID[IDs$x] == V(EFloMTies.05[[100]])$NodeID[IDs$y]
+
+test1 <- iFlo[[100]]
+test2 <- EFloMTies.05[[100]]
+
+correlateCentrality(test1,test2, "Degree", "pearson")
+correlateCentrality(test1,test2, "Closeness", "pearson")
+correlateCentrality(test1,test2, "Eigenvector", "pearson")
 
 computeNodeBias <- function(original_sim, perturbed_sim, name) {
   data.frame(

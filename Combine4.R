@@ -623,8 +623,8 @@ bias_summary <- bias_long %>%
     .groups = "drop"
   ) %>%
   mutate(
-    sd_lower = mean_val - sd_val,
-    sd_upper = mean_val + sd_val
+    sd_lower = mean_val - 1.96*sd_val,
+    sd_upper = mean_val + 1.96*sd_val
   )
 
 ######################################## Plot centrality robustness ########################################
@@ -634,7 +634,9 @@ ggplot(bias_summary, aes(x = error, y = mean_val, color = Network, group = Netwo
   geom_ribbon(aes(ymin = sd_lower, ymax = sd_upper, fill = Network), alpha = 0.2, colour = NA) +
   facet_wrap(~ Metric, scales = "free_y") +
   labs(x = "Missingness proportion",
-       y = "Average correlation ± 1 SD",
+       y = "Average correlation ± 1.96 SD",
        title = "Centrality robustness under increasing tie missingness") +
   coord_cartesian(ylim = c(-1, 1)) +
   theme_minimal()
+
+
