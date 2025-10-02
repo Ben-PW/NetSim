@@ -22,6 +22,10 @@ flo %v% "wealth" <- c(10,36,27,146,55,44,20,8,42,103,48,49,10,48,32,3)
 flo1 <- ergm(flo ~ edges + absdiff("wealth"))
 rm(flo)
 
+####################################### Books network ##################################
+
+data(books)
+
 ###############################  ############################
 # 4 x 24 x 24 weighted adjacency matrices
 
@@ -43,3 +47,6 @@ summary(acct2)
 
 rm(ac1, ac2, acct)
 
+#################################### Detach data package ###################################
+
+detach(package:networkdata)

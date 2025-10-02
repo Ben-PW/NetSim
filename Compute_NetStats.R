@@ -2,6 +2,8 @@
 # Helper functions for simulation script
 ####################################################################################################
 
+library(igraph)
+
 # Coerce directed networks to symmetrical
 
 undirect <- function(graph_list) {
@@ -36,13 +38,13 @@ IDNodes <- function(graph_list){
 #}
 
 matchNodes <- function(g1, g2) {
-  common_ids <- intersect(V(g1)$NodeID, V(g2)$NodeID)
+  common_ids <- intersect(igraph::V(g1)$NodeID, igraph::V(g2)$NodeID)
   
   # Order according to g1
-  x <- match(common_ids, V(g1)$NodeID)
+  x <- match(common_ids, igraph::V(g1)$NodeID)
   
   # Get the same common_ids in that order then match in g2
-  y <- match(V(g1)$NodeID[x], V(g2)$NodeID)
+  y <- match(igraph::V(g1)$NodeID[x], igraph::V(g2)$NodeID)
   
   list(x = x, y = y)
 }
@@ -234,22 +236,22 @@ correlateCentrality <- function(g1, g2, centrality, method){
   cor(x, y, method = method, use = "complete.obs")
 }
 
-IDs <- matchNodes(iFlo[[100]], EFloMTies.05[[100]])
-x <- vertex_attr(iFlo[[100]], "Degree", index = IDs$x)
-y <- vertex_attr(EFloMTies.05[[100]], "Degree", index = IDs$y)
-x
-y
+#IDs <- matchNodes(iFlo[[100]], EFloMTies.05[[100]])
+#x <- vertex_attr(iFlo[[100]], "Degree", index = IDs$x)
+#y <- vertex_attr(EFloMTies.05[[100]], "Degree", index = IDs$y)
+#x
+#y
 
-IDs <- matchNodes(iFlo[[100]], EFloMTies.05[[100]])
+#IDs <- matchNodes(iFlo[[100]], EFloMTies.05[[100]])
 
-V(iFlo[[100]])$NodeID[IDs$x] == V(EFloMTies.05[[100]])$NodeID[IDs$y]
+#V(iFlo[[100]])$NodeID[IDs$x] == V(EFloMTies.05[[100]])$NodeID[IDs$y]
 
-test1 <- iFlo[[100]]
-test2 <- EFloMTies.05[[100]]
+#test1 <- iFlo[[100]]
+#test2 <- EFloMTies.05[[100]]
 
-correlateCentrality(test1,test2, "Degree", "pearson")
-correlateCentrality(test1,test2, "Closeness", "pearson")
-correlateCentrality(test1,test2, "Eigenvector", "pearson")
+#correlateCentrality(test1,test2, "Degree", "pearson")
+#correlateCentrality(test1,test2, "Closeness", "pearson")
+#correlateCentrality(test1,test2, "Eigenvector", "pearson")
 
 computeNodeBias <- function(
     original_sim,
@@ -286,9 +288,10 @@ computeNodeBias <- function(
   return(out)
 }
 
-bb <- computeNodeBias(iAc2, 
-                EAc2MTies.05, 
-                "Ac2",
-                centralities = c("Degree","Betweenness","Closeness","Eigenvector","PageRank"),
-                method = "both")
+#bb <- computeNodeBias(iAc2, 
+#                EAc2MTies.05, 
+#                "Ac2_",
+#                centralities = c("Degree","Betweenness","Closeness","Eigenvector","PageRank"),
+#                method = "both")
 
+detach(package:igraph)

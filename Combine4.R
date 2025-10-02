@@ -28,13 +28,17 @@ library(dplyr)
 source('Data_process.R')
 source('Compute_NetStats.R')
 
-detach(package:networkdata)
+
 
 ####################################### Simulate networks #######################################
 
 iFlo <- simulate(flo1, nsim = 1000)
 iAc1 <- simulate(acct1, nsim = 1000)
 iAc2 <- simulate(acct2, nsim = 1000)
+
+# Inserting a larger network
+
+ibook <- replicate(1000, network.copy(books), simplify = FALSE)
 
 rm(flo1, acct1, acct2)
 
@@ -47,6 +51,7 @@ library(intergraph)
 iFlo <- lapply(iFlo, intergraph::asIgraph)
 iAc1 <- lapply(iAc1, intergraph::asIgraph)
 iAc2 <- lapply(iAc2, intergraph::asIgraph)
+ibook <- lapply(ibook, intergraph::asIgraph)
 ################################ Ensure all networks are undirected ###########################
 
 ##### Function to ensure networks are undirected #####
@@ -64,6 +69,7 @@ undirect <- function(graph_list) {
 
 iAc1 <- undirect(iAc1)
 iAc2 <- undirect(iAc2)
+ibook <- undirect(ibook)
 
 ###################################### Assign ID to nodes ############################
 ##### Function to assign node ID #####
@@ -78,6 +84,7 @@ IDNodes <- function(graph_list){
 iFlo <- IDNodes(iFlo)
 iAc1 <- IDNodes(iAc1)
 iAc2 <- IDNodes(iAc2)
+ibook <- IDNodes(ibook)
 
 ############################### Compute Ground Truth metrics ####################################
 
@@ -114,9 +121,10 @@ computeMetrics <- function(graph_list, name) {
 GTFlo <- computeMetrics(iFlo, "Flo")
 GTAc1 <- computeMetrics(iAc1, "Ac1")
 GTAc2 <- computeMetrics(iAc2, "Ac2")
+GTBook <- computeMetrics(ibook, "Book")
 
 # Combine all into a single dataframe
-GTAll <- bind_rows(GTFlo, GTAc1, GTAc2)
+GTAll <- bind_rows(GTFlo, GTAc1, GTAc2, GTBook)
 
 
 
@@ -139,6 +147,7 @@ computeCentrality <- function(graph_list){
 iFlo <- computeCentrality(iFlo)
 iAc1 <- computeCentrality(iAc1)
 iAc2 <- computeCentrality(iAc2)
+ibook <- computeCentrality(ibook)
 
 ######################################### Alter networks ########################################
 
@@ -165,22 +174,27 @@ tieMissRand <- function(graph_list, missing_pct = 0.1) {
 EFloMTies.01 <- tieMissRand(iFlo, 0.1)
 EAc1MTies.01 <- tieMissRand(iAc1, 0.1)
 EAc2MTies.01 <- tieMissRand(iAc2, 0.1)
+EibookMTies.01 <- tieMissRand(ibook, 0.1)
 
 EFloMTies.02 <- tieMissRand(iFlo, 0.2)
 EAc1MTies.02 <- tieMissRand(iAc1, 0.2)
 EAc2MTies.02 <- tieMissRand(iAc2, 0.2)
+EibookMTies.02 <- tieMissRand(ibook, 0.2)
 
 EFloMTies.03 <- tieMissRand(iFlo, 0.3)
 EAc1MTies.03 <- tieMissRand(iAc1, 0.3)
 EAc2MTies.03 <- tieMissRand(iAc2, 0.3)
+EibookMTies.03 <- tieMissRand(ibook, 0.3)
 
 EFloMTies.04 <- tieMissRand(iFlo, 0.4)
 EAc1MTies.04 <- tieMissRand(iAc1, 0.4)
 EAc2MTies.04 <- tieMissRand(iAc2, 0.4)
+EibookMTies.04 <- tieMissRand(ibook, 0.4)
 
 EFloMTies.05 <- tieMissRand(iFlo, 0.5)
 EAc1MTies.05 <- tieMissRand(iAc1, 0.5)
 EAc2MTies.05 <- tieMissRand(iAc2, 0.5)
+EibookMTies.05 <- tieMissRand(ibook, 0.5)
 
 ##### Simple tie addition #####
 
@@ -309,22 +323,27 @@ EAc2ANodesDD.01 <- nodeAddRand(iAc2, 0.1)
 EFloMTies.01.df <- computeMetrics(EFloMTies.01, "EFlo")
 EAc1MTies.01.df <- computeMetrics(EAc1MTies.01, "EAc1")
 EAc2MTies.01.df <- computeMetrics(EAc2MTies.01, "EAc2")
+EibookMTies.01.df <- computeMetrics(EibookMTies.01, "Eibook")
 
 EFloMTies.02.df <- computeMetrics(EFloMTies.02, "EFlo")
 EAc1MTies.02.df <- computeMetrics(EAc1MTies.02, "EAc1")
 EAc2MTies.02.df <- computeMetrics(EAc2MTies.02, "EAc2")
+EibookMTies.02.df <- computeMetrics(EibookMTies.02, "Eibook")
 
 EFloMTies.03.df <- computeMetrics(EFloMTies.03, "EFlo")
 EAc1MTies.03.df <- computeMetrics(EAc1MTies.03, "EAc1")
 EAc2MTies.03.df <- computeMetrics(EAc2MTies.03, "EAc2")
+EibookMTies.03.df <- computeMetrics(EibookMTies.03, "Eibook")
 
 EFloMTies.04.df <- computeMetrics(EFloMTies.04, "EFlo")
 EAc1MTies.04.df <- computeMetrics(EAc1MTies.04, "EAc1")
 EAc2MTies.04.df <- computeMetrics(EAc2MTies.04, "EAc2")
+EibookMTies.04.df <- computeMetrics(EibookMTies.04, "Eibook")
 
 EFloMTies.05.df <- computeMetrics(EFloMTies.05, "EFlo")
 EAc1MTies.05.df <- computeMetrics(EAc1MTies.05, "EAc1")
 EAc2MTies.05.df <- computeMetrics(EAc2MTies.05, "EAc2")
+EibookMTies.05.df <- computeMetrics(EibookMTies.05, "Eibook")
 
 
 ##### Node level metrics #####
@@ -332,22 +351,27 @@ EAc2MTies.05.df <- computeMetrics(EAc2MTies.05, "EAc2")
 EFloMTies.01 <- computeCentrality(EFloMTies.01)
 EAc1MTies.01 <- computeCentrality(EAc1MTies.01)
 EAc2MTies.01 <- computeCentrality(EAc2MTies.01)
+EibookMTies.01 <- computeCentrality(EibookMTies.01)
 
 EFloMTies.02 <- computeCentrality(EFloMTies.02)
 EAc1MTies.02 <- computeCentrality(EAc1MTies.02)
 EAc2MTies.02 <- computeCentrality(EAc2MTies.02)
+EibookMTies.02 <- computeCentrality(EibookMTies.02)
 
 EFloMTies.03 <- computeCentrality(EFloMTies.03)
 EAc1MTies.03 <- computeCentrality(EAc1MTies.03)
 EAc2MTies.03 <- computeCentrality(EAc2MTies.03)
+EibookMTies.03 <- computeCentrality(EibookMTies.03)
 
 EFloMTies.04 <- computeCentrality(EFloMTies.04)
 EAc1MTies.04 <- computeCentrality(EAc1MTies.04)
 EAc2MTies.04 <- computeCentrality(EAc2MTies.04)
+EibookMTies.04 <- computeCentrality(EibookMTies.04)
 
 EFloMTies.05 <- computeCentrality(EFloMTies.05)
 EAc1MTies.05 <- computeCentrality(EAc1MTies.05)
 EAc2MTies.05 <- computeCentrality(EAc2MTies.05)
+EibookMTies.05 <- computeCentrality(EibookMTies.05)
 
 
 ################################# Dataframe to compare centrality scores ##########################
@@ -361,135 +385,55 @@ EAc2MTies.05 <- computeCentrality(EAc2MTies.05)
 # IMPORTANT: I have removed the code squaring the pearson correlation because I'm not 100% on 
 # the justification for squaring it
 
-computeNodeBias <- function(original_sim, perturbed_sim, name) {
-  data.frame(
-    id = paste0(name, seq_along(original_sim)),
-    
-    deg_robust_cor = sapply(seq_along(original_sim), function(i) {
-      # Match nodes by NodeID
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor((V(original_sim[[i]])$Degree)[orig_indices], 
-          (V(perturbed_sim[[i]])$Degree)[pert_indices], 
-          use = "complete.obs")
-    }),
-    
-    bet_robust_cor = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor((V(original_sim[[i]])$Betweenness)[orig_indices], 
-          (V(perturbed_sim[[i]])$Betweenness)[pert_indices], 
-          use = "complete.obs")
-    }),
-    
-    clo_robust_cor = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor((V(original_sim[[i]])$Closeness)[orig_indices], 
-          (V(perturbed_sim[[i]])$Closeness)[pert_indices], 
-          use = "complete.obs")
-    }),
-    
-    eig_robust_cor = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor((V(original_sim[[i]])$Eigenvector)[orig_indices], 
-          (V(perturbed_sim[[i]])$Eigenvector)[pert_indices], 
-          use = "complete.obs")
-    }),
-    
-    pg_robust_cor = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor((V(original_sim[[i]])$PageRank)[orig_indices], 
-          (V(perturbed_sim[[i]])$PageRank)[pert_indices], 
-          use = "complete.obs")
-    }),
-    
-    deg_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor(rank((V(original_sim[[i]])$Degree)[orig_indices]), 
-          rank((V(perturbed_sim[[i]])$Degree)[pert_indices]), 
-          method = "spearman", use = "complete.obs")
-    }),
-    
-    bet_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor(rank((V(original_sim[[i]])$Betweenness)[orig_indices]), 
-          rank((V(perturbed_sim[[i]])$Betweenness)[pert_indices]), 
-          method = "spearman", use = "complete.obs")
-    }),
-    
-    clo_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor(rank((V(original_sim[[i]])$Closeness)[orig_indices]), 
-          rank((V(perturbed_sim[[i]])$Closeness)[pert_indices]), 
-          method = "spearman", use = "complete.obs")
-    }),
-    
-    eig_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor(rank((V(original_sim[[i]])$Eigenvector)[orig_indices]), 
-          rank((V(perturbed_sim[[i]])$Eigenvector)[pert_indices]), 
-          method = "spearman", use = "complete.obs")
-    }),
-    
-    pg_robust_srcc = sapply(seq_along(original_sim), function(i) {
-      common_ids <- intersect(V(original_sim[[i]])$NodeID, V(perturbed_sim[[i]])$NodeID)
-      orig_indices <- match(common_ids, V(original_sim[[i]])$NodeID)
-      pert_indices <- match(common_ids, V(perturbed_sim[[i]])$NodeID)
-      
-      cor(rank((V(original_sim[[i]])$PageRank)[orig_indices]), 
-          rank((V(perturbed_sim[[i]])$PageRank)[pert_indices]), 
-          method = "spearman", use = "complete.obs")
-    })
-  )
-}
+
 
 ##### Compute bias #####
 
 # Compute bias for random tie missingness simulations
-biasEFloMTies.01 <- computeNodeBias(iFlo, EFloMTies.01, "Flo")
-biasEAc1MTies.01 <- computeNodeBias(iAc1, EAc1MTies.01, "Ac1")
-biasEAc2MTies.01 <- computeNodeBias(iAc2, EAc2MTies.01, "Ac2")
+#biasEFloMTies.01 <- computeNodeBias(iFlo, EFloMTies.01, "Flo")
+#biasEAc1MTies.01 <- computeNodeBias(iAc1, EAc1MTies.01, "Ac1")
+#biasEAc2MTies.01 <- computeNodeBias(iAc2, EAc2MTies.01, "Ac2")
 
-biasEFloMTies.02 <- computeNodeBias(iFlo, EFloMTies.02, "Flo")
-biasEAc1MTies.02 <- computeNodeBias(iAc1, EAc1MTies.02, "Ac1")
-biasEAc2MTies.02 <- computeNodeBias(iAc2, EAc2MTies.02, "Ac2")
+#biasEFloMTies.02 <- computeNodeBias(iFlo, EFloMTies.02, "Flo")
+#biasEAc1MTies.02 <- computeNodeBias(iAc1, EAc1MTies.02, "Ac1")
+#biasEAc2MTies.02 <- computeNodeBias(iAc2, EAc2MTies.02, "Ac2")
 
-biasEFloMTies.03 <- computeNodeBias(iFlo, EFloMTies.03, "Flo")
-biasEAc1MTies.03 <- computeNodeBias(iAc1, EAc1MTies.03, "Ac1")
-biasEAc2MTies.03 <- computeNodeBias(iAc2, EAc2MTies.03, "Ac2")
+#biasEFloMTies.03 <- computeNodeBias(iFlo, EFloMTies.03, "Flo")
+#biasEAc1MTies.03 <- computeNodeBias(iAc1, EAc1MTies.03, "Ac1")
+#biasEAc2MTies.03 <- computeNodeBias(iAc2, EAc2MTies.03, "Ac2")
 
-biasEFloMTies.04 <- computeNodeBias(iFlo, EFloMTies.04, "Flo")
-biasEAc1MTies.04 <- computeNodeBias(iAc1, EAc1MTies.04, "Ac1")
-biasEAc2MTies.04 <- computeNodeBias(iAc2, EAc2MTies.04, "Ac2")
+#biasEFloMTies.04 <- computeNodeBias(iFlo, EFloMTies.04, "Flo")
+#biasEAc1MTies.04 <- computeNodeBias(iAc1, EAc1MTies.04, "Ac1")
+#biasEAc2MTies.04 <- computeNodeBias(iAc2, EAc2MTies.04, "Ac2")
 
-biasEFloMTies.05 <- computeNodeBias(iFlo, EFloMTies.05, "Flo")
-biasEAc1MTies.05 <- computeNodeBias(iAc1, EAc1MTies.05, "Ac1")
-biasEAc2MTies.05 <- computeNodeBias(iAc2, EAc2MTies.05, "Ac2")
+#biasEFloMTies.05 <- computeNodeBias(iFlo, EFloMTies.05, "Flo")
+#biasEAc1MTies.05 <- computeNodeBias(iAc1, EAc1MTies.05, "Ac1")
+#biasEAc2MTies.05 <- computeNodeBias(iAc2, EAc2MTies.05, "Ac2")
+
+biasEFloMTies.01 <- computeNodeBias(iFlo, EFloMTies.01, "Flo_", method = "both")
+biasEAc1MTies.01 <- computeNodeBias(iAc1, EAc1MTies.01, "Ac1_", method = "both")
+biasEAc2MTies.01 <- computeNodeBias(iAc2, EAc2MTies.01, "Ac2_", method = "both")
+biasEibookMTies.01 <- computeNodeBias(ibook, EibookMTies.01, "ibook_", method = "both")
+
+biasEFloMTies.02 <- computeNodeBias(iFlo, EFloMTies.02, "Flo_", method = "both")
+biasEAc1MTies.02 <- computeNodeBias(iAc1, EAc1MTies.02, "Ac1_", method = "both")
+biasEAc2MTies.02 <- computeNodeBias(iAc2, EAc2MTies.02, "Ac2_", method = "both")
+biasEibookMTies.02 <- computeNodeBias(ibook, EibookMTies.02, "ibook_", method = "both")
+
+biasEFloMTies.03 <- computeNodeBias(iFlo, EFloMTies.03, "Flo_", method = "both")
+biasEAc1MTies.03 <- computeNodeBias(iAc1, EAc1MTies.03, "Ac1_", method = "both")
+biasEAc2MTies.03 <- computeNodeBias(iAc2, EAc2MTies.03, "Ac2_", method = "both")
+biasEibookMTies.03 <- computeNodeBias(ibook, EibookMTies.03, "ibook_", method = "both")
+
+biasEFloMTies.04 <- computeNodeBias(iFlo, EFloMTies.04, "Flo_", method = "both")
+biasEAc1MTies.04 <- computeNodeBias(iAc1, EAc1MTies.04, "Ac1_", method = "both")
+biasEAc2MTies.04 <- computeNodeBias(iAc2, EAc2MTies.04, "Ac2_", method = "both")
+biasEibookMTies.04 <- computeNodeBias(ibook, EibookMTies.04, "ibook_", method = "both")
+
+biasEFloMTies.05 <- computeNodeBias(iFlo, EFloMTies.05, "Flo_", method = "both")
+biasEAc1MTies.05 <- computeNodeBias(iAc1, EAc1MTies.05, "Ac1_", method = "both")
+biasEAc2MTies.05 <- computeNodeBias(iAc2, EAc2MTies.05, "Ac2_", method = "both")
+biasEibookMTies.05 <- computeNodeBias(ibook, EibookMTies.05, "ibook_", method = "both")
 
 
 
@@ -506,55 +450,41 @@ bias_GTadd <- left_join(metric_bias, GTAll, by = "id")
 
 library(ggplot2)
 library(reshape2)
-
-bias_long <- melt(metric_bias, 
-                  id.vars = "id", 
-                  variable.name = "Centrality", 
-                  value.name = "Robustness")
-
-ggplot(data = bias_long,
-       aes(x = Centrality,
-           y = Robustness)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-ggplot(bias_GTadd, aes(x = clustering, y = bet_robust_cor)) +
-  geom_point(alpha = 0.6, color = "blue") +
-  theme_minimal() 
-
-########################################### Bigger visualisation ##########################
-
-#Combine metric dataframes
-
 library(tidyr)
 
 # Add error level column to each df
 EFloMTies.01.df$error <- 0.1
 EAc1MTies.01.df$error <- 0.1
 EAc2MTies.01.df$error <- 0.1
+EibookMTies.01.df$error <- 0.1
 
 EFloMTies.02.df$error <- 0.2
 EAc1MTies.02.df$error <- 0.2
 EAc2MTies.02.df$error <- 0.2
+EibookMTies.02.df$error <- 0.2
 
 EFloMTies.03.df$error <- 0.3
 EAc1MTies.03.df$error <- 0.3
 EAc2MTies.03.df$error <- 0.3
+EibookMTies.03.df$error <- 0.3
 
 EFloMTies.04.df$error <- 0.4
 EAc1MTies.04.df$error <- 0.4
 EAc2MTies.04.df$error <- 0.4
+EibookMTies.04.df$error <- 0.4
 
 EFloMTies.05.df$error <- 0.5
 EAc1MTies.05.df$error <- 0.5
 EAc2MTies.05.df$error <- 0.5
+EibookMTies.05.df$error <- 0.5
 
 #######################################################
 
 metrics_all <- bind_rows(
   EFloMTies.01.df, EFloMTies.02.df, EFloMTies.03.df, EFloMTies.04.df, EFloMTies.05.df,
   EAc1MTies.01.df, EAc1MTies.02.df, EAc1MTies.03.df, EAc1MTies.04.df, EAc1MTies.05.df,
-  EAc2MTies.01.df, EAc2MTies.02.df, EAc2MTies.03.df, EAc2MTies.04.df, EAc2MTies.05.df
+  EAc2MTies.01.df, EAc2MTies.02.df, EAc2MTies.03.df, EAc2MTies.04.df, EAc2MTies.05.df,
+  EibookMTies.01.df, EibookMTies.02.df, EibookMTies.03.df, EibookMTies.04.df, EibookMTies.05.df
 )
 
 
@@ -595,17 +525,18 @@ ggplot(metrics_summary, aes(x = error, y = mean_val, color = Network, group = Ne
 # Combine centrality robustness 
 
 # Add error level 
-biasEFloMTies.01$error <- 0.1; biasEAc1MTies.01$error <- 0.1; biasEAc2MTies.01$error <- 0.1
-biasEFloMTies.02$error <- 0.2; biasEAc1MTies.02$error <- 0.2; biasEAc2MTies.02$error <- 0.2
-biasEFloMTies.03$error <- 0.3; biasEAc1MTies.03$error <- 0.3; biasEAc2MTies.03$error <- 0.3
-biasEFloMTies.04$error <- 0.4; biasEAc1MTies.04$error <- 0.4; biasEAc2MTies.04$error <- 0.4
-biasEFloMTies.05$error <- 0.5; biasEAc1MTies.05$error <- 0.5; biasEAc2MTies.05$error <- 0.5
+biasEFloMTies.01$error <- 0.1; biasEAc1MTies.01$error <- 0.1; biasEAc2MTies.01$error <- 0.1; biasEibookMTies.01$error <- 0.1
+biasEFloMTies.02$error <- 0.2; biasEAc1MTies.02$error <- 0.2; biasEAc2MTies.02$error <- 0.2; biasEibookMTies.02$error <- 0.2
+biasEFloMTies.03$error <- 0.3; biasEAc1MTies.03$error <- 0.3; biasEAc2MTies.03$error <- 0.3; biasEibookMTies.03$error <- 0.3
+biasEFloMTies.04$error <- 0.4; biasEAc1MTies.04$error <- 0.4; biasEAc2MTies.04$error <- 0.4; biasEibookMTies.04$error <- 0.4
+biasEFloMTies.05$error <- 0.5; biasEAc1MTies.05$error <- 0.5; biasEAc2MTies.05$error <- 0.5; biasEibookMTies.05$error <- 0.5
 
 
 bias_all <- bind_rows(
   biasEFloMTies.01, biasEFloMTies.02, biasEFloMTies.03, biasEFloMTies.04, biasEFloMTies.05,
   biasEAc1MTies.01, biasEAc1MTies.02, biasEAc1MTies.03, biasEAc1MTies.04, biasEAc1MTies.05,
-  biasEAc2MTies.01, biasEAc2MTies.02, biasEAc2MTies.03, biasEAc2MTies.04, biasEAc2MTies.05
+  biasEAc2MTies.01, biasEAc2MTies.02, biasEAc2MTies.03, biasEAc2MTies.04, biasEAc2MTies.05,
+  biasEibookMTies.01, biasEibookMTies.02, biasEibookMTies.03, biasEibookMTies.04, biasEibookMTies.05
 )
 
 
