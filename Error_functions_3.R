@@ -4,14 +4,22 @@
 
 #####################################################################################################################
 
+# Dependenices 
+
+library(igraph)
+library(purrr)
+library(dplyr)
+
 ################################## Error functions for Igraph
 
-# Randomly remove ties from the network
+##### Random tie missingness #####
 
-tieMissRand <- function(graph_list, missing_pct = 0.1) {
+# Base function to randomly remove ties from the network
+
+tieMissRand <- function(graph_list, error_pct = 0.1) {
   lapply(graph_list, function(g) {
     m <- ecount(g)
-    k <- round(m * missing_pct)
+    k <- round(m * error_pct)
     if (m > 0 && k > 0) {
       # sample k random edges
       to_remove <- sample(E(g), k)
@@ -22,14 +30,23 @@ tieMissRand <- function(graph_list, missing_pct = 0.1) {
   })
 }
 
+# Wrapper to apply to network lists
 
+randomMissingTies <- function(datasets, error_levels) {
+  map(datasets, function(data) {
+    map(error_levels, function(p) tieMissRand(data, error_pct = p)) %>%
+      set_names(paste0("p", sub("\\.", "", error_levels)))
+  })
+}
 
-# Randomly remove nodes from the network
+##### Random node deletion #####
 
-nodeMissRand <- function(graph_list, missing_pct = 0.1) {
+# Base function to remove nodes from the network
+
+nodeMissRand <- function(graph_list, error_pct = 0.1) {
   lapply(graph_list, function(g) {
     n <- vcount(g)
-    k <- round(n * missing_pct)
+    k <- round(n * error_pct)
     if (n > 0 && k > 0) {
       to_remove <- sample(V(g), k)
       # delete nodes and their edges
@@ -39,13 +56,23 @@ nodeMissRand <- function(graph_list, missing_pct = 0.1) {
   })
 }
 
+# Wrapper to apply to network lists
 
-# Function to randomly add ties
+randomMissingNodes <- function(datasets, error_levels) {
+  map(datasets, function(data) {
+    map(error_levels, function(p) nodeMissRand(data, error_pct = p)) %>%
+      set_names(paste0("p", sub("\\.", "", error_levels)))
+  })
+}
 
-tieAddRand <- function(graph_list, add_pct = 0.1) {
+##### Random tie addition #####
+
+# Base function to randomly add ties
+
+tieAddRand <- function(graph_list, error_pct = 0.1) {
   lapply(graph_list, function(g) {
     m <- ecount(g)
-    num_add <- round(m * add_pct)
+    num_add <- round(m * error_pct)
     if (m > 0 && num_add > 0) {
       # Build complement graph 
       comp_g <- complementer(g, loops = FALSE)
@@ -67,6 +94,17 @@ tieAddRand <- function(graph_list, add_pct = 0.1) {
     g
   })
 }
+
+# Wrapper to apply to network lists
+
+randomAddedTies <- function(datasets, error_levels) {
+  map(datasets, function(data) {
+    map(error_levels, function(p) tieAddRand(data, error_pct = p)) %>%
+      set_names(paste0("p", sub("\\.", "", error_levels)))
+  })
+}
+
+##### Node addition functions #####
 
 # Add nodes with fixed number of random ties
 
@@ -94,14 +132,20 @@ nodeAddRand <- function(graph_list, error_pct = 0.1, edge_number = 2) {
   })
 }
 
+randomAddedNodesFixed <- function(datasets, error_levels, edge_number = 2) {
+  map(datasets, function(data) {
+    map(error_levels, function(p) nodeAddRand(data, error_pct = p, edge_number = edge_number)) %>%
+      set_names(paste0("p", sub("\\.", "", error_levels)))
+  })
+}
 
 # Add nodes with ties based on original network degree distribution
 
-NodeAddRandDD_igraph <- function(graph_list, add_pct = 0.1) {
+nodeAddRandDD <- function(graph_list, error_pct = 0.1) {
   lapply(graph_list, function(g) {
 
     n0    <- igraph::vcount(g)
-    n_new <- round(n0 * add_pct)
+    n_new <- round(n0 * error_pct)
     
     if (n_new > 0) {
       g      <- igraph::add_vertices(g, n_new)
@@ -122,6 +166,17 @@ NodeAddRandDD_igraph <- function(graph_list, add_pct = 0.1) {
   })
 }
 
+randomAddedNodesDD <- function(datasets, error_levels) {
+  map(datasets, function(data) {
+    map(error_levels, function(p) nodeAddRandDD(data, error_pct = p)) %>%
+      set_names(paste0("p", sub("\\.", "", error_levels)))
+  })
+}
 
+# Cleanup
+
+detach(package:dplyr)
+detach(package:igraph)
+detach(package:purrr)
 
 
