@@ -111,7 +111,45 @@ missingTies <- purrr::map(missingTies, function(error_level_list) {
 
 ##### Compute bias #####
 
+# Missing ties
+
 biasMissingTies <- purrr::imap(missingTies, function(error_levels, dataset_name) {
+  purrr::imap(error_levels, function(perturbed_list, error_label) {
+    computeNodeBias(
+      original_sim  = datasets[[dataset_name]],
+      perturbed_sim = perturbed_list,
+      name          = paste0("E", dataset_name, "_", error_label)
+    )
+  })
+})
+
+# Added ties
+
+biasAddedTies <- purrr::imap(addedTies, function(error_levels, dataset_name) {
+  purrr::imap(error_levels, function(perturbed_list, error_label) {
+    computeNodeBias(
+      original_sim  = datasets[[dataset_name]],
+      perturbed_sim = perturbed_list,
+      name          = paste0("E", dataset_name, "_", error_label)
+    )
+  })
+})
+
+# Missing nodes
+
+biasMissingNodes <- purrr::imap(missingNodes, function(error_levels, dataset_name) {
+  purrr::imap(error_levels, function(perturbed_list, error_label) {
+    computeNodeBias(
+      original_sim  = datasets[[dataset_name]],
+      perturbed_sim = perturbed_list,
+      name          = paste0("E", dataset_name, "_", error_label)
+    )
+  })
+})
+
+# DD added nodes
+
+biasDDAddedNodes <- purrr::imap(DDAddedNodes, function(error_levels, dataset_name) {
   purrr::imap(error_levels, function(perturbed_list, error_label) {
     computeNodeBias(
       original_sim  = datasets[[dataset_name]],
