@@ -229,11 +229,28 @@ computeNodeBias <- function(original_sim, perturbed_sim, name) {
 }
 
 
-correlateCentrality <- function(g1, g2, centrality, method){
+##correlateCentrality <- function(g1, g2, centrality, method){
+#  IDs <- matchNodes(g1, g2)
+#  x <- vertex_attr(g1, centrality, index = IDs$x)
+#  y <- vertex_attr(g2, centrality, index = IDs$y)
+#  cor(x, y, method = method, use = "complete.obs")
+#}
+
+correlateCentrality <- function(g1, g2, centrality, method) {
   IDs <- matchNodes(g1, g2)
   x <- vertex_attr(g1, centrality, index = IDs$x)
   y <- vertex_attr(g2, centrality, index = IDs$y)
-  cor(x, y, method = method, use = "complete.obs")
+  
+  # Find complete paired cases
+  complete <- complete.cases(x, y)
+  n_valid <- sum(complete)
+  
+  # If fewer than 2 valid pairs, cannot compute correlation
+  if (n_valid < 2) {
+    return(NA_real_)
+  }
+  
+  cor(x[complete], y[complete], method = method)
 }
 
 #IDs <- matchNodes(iFlo[[100]], EFloMTies.05[[100]])
