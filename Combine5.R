@@ -106,9 +106,6 @@ metrics_error_networks <- map(error_networks, function(error_type_list) {
 
 ##### Compute bias #####
 
-# This doesn't work currently, the higher level node missingness is causing issues with Flo, likely 
-# because it is returning entirely NA values if network becomes fragmented
-
 bias_all <- imap(error_networks, function(error_type_list, error_type_name) { # error_type_name = missingTies, etc
   imap(error_type_list, function(dataset_list, dataset_name) { # dataset_name = Flo etc
     imap(dataset_list, function(perturbed_list, error_label) { # error_label = p03 etc
