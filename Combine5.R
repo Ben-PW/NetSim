@@ -78,36 +78,31 @@ datasets <- lapply(datasets, computeCentrality)
 
 library(purrr)
 
-# Simple random tie removal 
-missingTies <- randomMissingTies(datasets, error_levels)
+# If memory useage becomes an issue, skip creating the list, run the calculations step by step, then delete
+# networks when no longer needed
+# Or create multiple smaller lists, then delete networks when no longer needed and then run the other 
+# list
 
-# Simple random tie addition
-addedTies <- randomAddedTies(datasets, error_levels)
+error_networks <- list(
+  missingTies = randomMissingTies(datasets, error_levels),
+  addedTies = randomAddedTies(datasets, error_levels),
+  missingNodes = randomMissingNodes(datasets, error_levels),
+  simpleAddedNodes = randomAddedNodesFixed(datasets, error_levels),
+  DDAddedNodes = randomAddedNodesDD(datasets, error_levels)
+)
 
-# Simple random node deletion 
-missingNodes <- randomMissingNodes(datasets, error_levels)
+##### Recalculate statistics on altered networks #####
 
-# Simple random node addition (fixed edge number)
-simpleAddedNodes <- randomAddedNodesFixed(datasets, error_levels)
+error_networks <- map(error_networks, ~map(.x, ~map(.x, computeCentrality)))
 
-# Random degree distribution node addition
-DDAddedNodes <- randomAddedNodesDD(datasets, error_levels)
-
-##### Store data #####
-
-# Global network metrics
-
-metricsMissingTies <- purrr::imap(missingTies, function(error_level_list, dataset_name) {
-  purrr::map(error_level_list, function(glist) {
-    computeMetrics(glist, paste0("E", dataset_name))
+metrics_error_networks <- map(error_networks, function(error_type_list) {
+  imap(error_type_list, function(dataset_list, dataset_name) {
+    map(dataset_list, function(glist) {
+      computeMetrics(glist, paste0("E", dataset_name))
+    })
   })
 })
 
-# Node level metrics 
-
-missingTies <- purrr::map(missingTies, function(error_level_list) {
-  purrr::map(error_level_list, computeCentrality)
-})
 
 ##### Compute bias #####
 
