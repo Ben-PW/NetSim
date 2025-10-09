@@ -66,7 +66,7 @@ correlateNodes <- function(x, y, method = "pearson") {
 # I think I need to address the rounding here
 computeMetrics <- function(graph_list, name) {
   data.frame(
-    id = paste0(name, seq_along(graph_list)),
+    id = paste0(name,"_", seq_along(graph_list)),
     
     density = sapply(graph_list, function(g) {
       edge_density(g, loops = FALSE)
@@ -278,7 +278,7 @@ computeNodeBias <- function(
     method = "both"  # "pearson", "spearman", or "both"
 ) {
 
-  out <- data.frame(id = paste0(name, seq_along(original_sim)))
+  out <- data.frame(id = paste0(name, "_", seq_along(original_sim)))
   
   # Pearson correlation
   if (method %in% c("pearson", "both")) {
