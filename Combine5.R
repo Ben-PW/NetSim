@@ -19,6 +19,7 @@ set.seed(2345)
 source('Error_functions_3.R')
 source('Data_process.R')
 source('Compute_NetStats.R')
+source('Spotlight_function.R')
 
 #### Load environment ####
 

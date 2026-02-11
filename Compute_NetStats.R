@@ -73,7 +73,7 @@ computeMetrics <- function(graph_list, name) {
     }),
     
     dcent = sapply(graph_list, function(g) {
-      cent <- centralization.degree(g, mode = "all", normalized = TRUE)
+      cent <- centr_degree(g, mode = "all", normalized = TRUE)
       cent$centralization
     }),
     
@@ -96,8 +96,8 @@ computeMetrics <- function(graph_list, name) {
 computeCentrality <- function(graph_list){
   lapply(graph_list, function(g){
     V(g)$Degree <- degree(g, mode = "all")
-    V(g)$Betweenness <- estimate_betweenness(g, cutoff = -1)
-    V(g)$Closeness <- estimate_closeness(g, cutoff = -1)
+    V(g)$Betweenness <- betweenness(g, cutoff = -1)
+    V(g)$Closeness <- closeness(g, cutoff = -1)
     V(g)$Eigenvector <- eigen_centrality(g)$vector
     V(g)$PageRank <- page_rank(g)$vector
     g
