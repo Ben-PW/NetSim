@@ -4,6 +4,8 @@
 
 ####################################################################################
 
+# library(netUtils)
+
 assignSpotlight <- function(graph_list, spotlight_pct, s) {
   lapply(graph_list, function(g) {
     
@@ -23,4 +25,5 @@ assignSpotlight <- function(graph_list, spotlight_pct, s) {
   })
 }
 
+iFlo <- assignSpotlight(iFlo, 0.1, 1)
 
